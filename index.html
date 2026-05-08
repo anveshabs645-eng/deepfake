@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DeepGuard</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="floaties">
+  <span class="f">✦</span><span class="f">◈</span><span class="f">✧</span>
+  <span class="f">⬡</span><span class="f">✦</span><span class="f">◇</span>
+  <span class="f">✧</span><span class="f">⬡</span><span class="f">◈</span>
+  <span class="f">✦</span><span class="f">◇</span><span class="f">✧</span>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-pill">✦ &nbsp; AI · ML · MULTIMODAL DETECTION &nbsp; ✦</div>
+
+  <!-- 3D PRINT STYLE HEXAGONAL LOGO — NO TEXT -->
+  <div class="logo-3d-wrap">
+    <svg class="big-logo" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="ambientGlow" cx="50%" cy="45%" r="50%">
+          <stop offset="0%"  stop-color="#e8609a" stop-opacity="0.20"/>
+          <stop offset="100%" stop-color="#e8609a" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="topFace" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#2e0e1e"/>
+          <stop offset="45%"  stop-color="#19080f"/>
+          <stop offset="100%" stop-color="#0c0408"/>
+        </linearGradient>
+        <linearGradient id="leftFace" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#090307"/>
+          <stop offset="100%" stop-color="#110508"/>
+        </linearGradient>
+        <linearGradient id="rightFace" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#1b0a10"/>
+          <stop offset="100%" stop-color="#120609"/>
+        </linearGradient>
+        <radialGradient id="eyeCore" cx="50%" cy="38%" r="55%">
+          <stop offset="0%"   stop-color="#ffcde2"/>
+          <stop offset="45%"  stop-color="#e8609a"/>
+          <stop offset="100%" stop-color="#7a1d48"/>
+        </radialGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow2" x="-90%" y="-90%" width="280%" height="280%">
+          <feGaussianBlur stdDeviation="8" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="sg" x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur stdDeviation="1.8" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <clipPath id="topClip">
+          <polygon points="150,30 228,76 228,168 150,214 72,168 72,76"/>
+        </clipPath>
+      </defs>
+
+      <!-- AMBIENT GLOW -->
+      <ellipse cx="150" cy="148" rx="128" ry="118" fill="url(#ambientGlow)"/>
+
+      <!-- GROUND SHADOW -->
+      <ellipse cx="150" cy="238" rx="80" ry="9" fill="rgba(232,96,154,0.09)"/>
+
+      <!-- LEFT SIDE FACE -->
+      <polygon points="72,76 72,168 150,214 150,122" fill="url(#leftFace)" stroke="rgba(232,96,154,0.14)" stroke-width="0.6"/>
+
+      <!-- RIGHT SIDE FACE -->
+      <polygon points="228,76 228,168 150,214 150,122" fill="url(#rightFace)" stroke="rgba(232,96,154,0.20)" stroke-width="0.6"/>
+
+      <!-- BOTTOM EDGE STRIP -->
+      <polygon points="72,168 150,214 228,168 228,175 150,221 72,175" fill="#08030a" stroke="rgba(232,96,154,0.08)" stroke-width="0.5"/>
+
+      <!-- MAIN TOP HEX FACE -->
+      <polygon points="150,30 228,76 228,168 150,214 72,168 72,76"
+               fill="url(#topFace)" stroke="#e8609a" stroke-width="1.8" filter="url(#glow)"/>
+
+      <!-- 3D PRINT LAYER LINES — FDM aesthetic horizontal slices -->
+      <g clip-path="url(#topClip)" opacity="0.19">
+        <line x1="60" y1="84"  x2="240" y2="84"  stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="95"  x2="240" y2="95"  stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="106" x2="240" y2="106" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="117" x2="240" y2="117" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="128" x2="240" y2="128" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="139" x2="240" y2="139" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="150" x2="240" y2="150" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="161" x2="240" y2="161" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="172" x2="240" y2="172" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="183" x2="240" y2="183" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="194" x2="240" y2="194" stroke="#e8609a" stroke-width="0.75"/>
+        <line x1="60" y1="205" x2="240" y2="205" stroke="#e8609a" stroke-width="0.75"/>
+      </g>
+
+      <!-- CONCENTRIC HEX RINGS (3D depth layers) -->
+      <polygon points="150,44 214,82 214,158 150,196 86,158 86,82"
+               fill="none" stroke="rgba(232,96,154,0.20)" stroke-width="1.2"/>
+      <polygon points="150,58 200,89 200,149 150,179 100,149 100,89"
+               fill="none" stroke="rgba(232,96,154,0.12)" stroke-width="0.9" stroke-dasharray="5,4"/>
+      <polygon points="150,72 186,96 186,139 150,163 114,139 114,96"
+               fill="none" stroke="rgba(232,96,154,0.07)" stroke-width="0.7"/>
+
+      <!-- BEVEL TOP HIGHLIGHT -->
+      <polygon points="150,30 228,76 214,82 150,44 86,82 72,76"
+               fill="rgba(255,200,225,0.07)" stroke="rgba(255,215,235,0.28)" stroke-width="0.6"/>
+
+      <!-- CIRCUIT TRACES -->
+      <g clip-path="url(#topClip)" opacity="0.32">
+        <line x1="86"  y1="108" x2="112" y2="108" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="188" y1="108" x2="214" y2="108" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="86"  y1="164" x2="112" y2="164" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="188" y1="164" x2="214" y2="164" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="112" y1="102" x2="112" y2="115" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="188" y1="102" x2="188" y2="115" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="112" y1="158" x2="112" y2="171" stroke="#f09cc0" stroke-width="0.9"/>
+        <line x1="188" y1="158" x2="188" y2="171" stroke="#f09cc0" stroke-width="0.9"/>
+        <rect x="109" y="105" width="6" height="6" rx="1" fill="none" stroke="#f09cc0" stroke-width="0.9"/>
+        <rect x="185" y="105" width="6" height="6" rx="1" fill="none" stroke="#f09cc0" stroke-width="0.9"/>
+        <rect x="109" y="161" width="6" height="6" rx="1" fill="none" stroke="#f09cc0" stroke-width="0.9"/>
+        <rect x="185" y="161" width="6" height="6" rx="1" fill="none" stroke="#f09cc0" stroke-width="0.9"/>
+      </g>
+
+      <!-- SHIELD BODY -->
+      <path d="M150,78 L179,94 L179,133 Q179,160 150,176 Q121,160 121,133 L121,94 Z"
+            fill="rgba(232,96,154,0.05)" stroke="#e8609a" stroke-width="2" filter="url(#glow)"/>
+      <path d="M150,86 L173,100 L173,132 Q173,154 150,168 Q127,154 127,132 L127,100 Z"
+            fill="none" stroke="rgba(240,156,192,0.22)" stroke-width="0.9"/>
+
+      <!-- RETICLE OUTER DASHED RING -->
+      <circle cx="150" cy="118" r="23"
+              fill="none" stroke="#e8609a" stroke-width="1.5"
+              stroke-dasharray="6,3" filter="url(#glow)"/>
+      <!-- RETICLE MID RING -->
+      <circle cx="150" cy="118" r="15"
+              fill="rgba(232,96,154,0.10)" stroke="#f09cc0" stroke-width="1.2"
+              filter="url(#sg)"/>
+      <!-- EYE CORE -->
+      <circle cx="150" cy="118" r="7" fill="url(#eyeCore)" filter="url(#glow2)"/>
+      <!-- PUPIL -->
+      <circle cx="150" cy="118" r="2.5" fill="#fff" opacity="0.92"/>
+      <!-- SPECULAR -->
+      <circle cx="152.8" cy="115.5" r="1.1" fill="#fff" opacity="0.60"/>
+
+      <!-- CROSSHAIR LINES -->
+      <line x1="150" y1="88"  x2="150" y2="103" stroke="#f09cc0" stroke-width="1.2" stroke-linecap="round" filter="url(#sg)"/>
+      <line x1="150" y1="133" x2="150" y2="148" stroke="#f09cc0" stroke-width="1.2" stroke-linecap="round" filter="url(#sg)"/>
+      <line x1="119" y1="118" x2="135" y2="118" stroke="#f09cc0" stroke-width="1.2" stroke-linecap="round" filter="url(#sg)"/>
+      <line x1="165" y1="118" x2="181" y2="118" stroke="#f09cc0" stroke-width="1.2" stroke-linecap="round" filter="url(#sg)"/>
+
+      <!-- DIAGONAL CORNER TICKS -->
+      <line x1="135" y1="103" x2="138" y2="106" stroke="#f09cc0" stroke-width="0.8" opacity="0.55"/>
+      <line x1="165" y1="103" x2="162" y2="106" stroke="#f09cc0" stroke-width="0.8" opacity="0.55"/>
+      <line x1="135" y1="133" x2="138" y2="130" stroke="#f09cc0" stroke-width="0.8" opacity="0.55"/>
+      <line x1="165" y1="133" x2="162" y2="130" stroke="#f09cc0" stroke-width="0.8" opacity="0.55"/>
+
+      <!-- SHIELD CHEVRON BOTTOM -->
+      <polyline points="138,164 150,174 162,164"
+                fill="none" stroke="#e8609a" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" filter="url(#sg)"/>
+
+      <!-- CORNER VERTEX DOTS -->
+      <circle cx="150" cy="30"  r="4.5" fill="#f09cc0" filter="url(#glow)"/>
+      <circle cx="228" cy="76"  r="4.5" fill="#f09cc0" filter="url(#glow)"/>
+      <circle cx="228" cy="168" r="4.5" fill="#f09cc0" filter="url(#glow)"/>
+      <circle cx="150" cy="214" r="4.5" fill="#f09cc0" filter="url(#glow)"/>
+      <circle cx="72"  cy="168" r="4.5" fill="#f09cc0" filter="url(#glow)"/>
+      <circle cx="72"  cy="76"  r="4.5" fill="#f09cc0" filter="url(#glow)"/>
+
+      <!-- SIDE EDGE MID-DOTS -->
+      <circle cx="72"  cy="122" r="2.5" fill="#e8609a" opacity="0.50"/>
+      <circle cx="228" cy="122" r="2.5" fill="#e8609a" opacity="0.50"/>
+
+      <!-- OUTER ORBIT -->
+      <circle cx="150" cy="130" r="130"
+              fill="none" stroke="rgba(232,96,154,0.06)" stroke-width="0.8" stroke-dasharray="2,9"/>
+
+      <!-- CORNER STARS -->
+      <text x="8"   y="24"  font-size="11" fill="#f09cc0" opacity="0.30">✦</text>
+      <text x="278" y="24"  font-size="11" fill="#f09cc0" opacity="0.30">✦</text>
+      <text x="8"   y="296" font-size="11" fill="#f09cc0" opacity="0.30">✦</text>
+      <text x="278" y="296" font-size="11" fill="#f09cc0" opacity="0.30">✦</text>
+    </svg>
+  </div>
+
+  <h1 class="hero-title">DEEPGUARD</h1>
+  <p class="hero-sub">Multimodal Deepfake Detection System</p>
+  <div class="hero-tags">
+    <span class="htag">EfficientNet-B4</span>
+    <span class="htag">Gradient Boosting</span>
+    <span class="htag">Fusion MLP</span>
+    <span class="htag">SHA-256</span>
+  </div>
+  <a href="#app" class="hero-cta">✦ &nbsp; Get Started &nbsp; ✦</a>
+</section>
+
+<!-- ═══ STATS ═══ -->
+<div class="stats-bar">
+  <div class="stat"><span class="sn">3</span><span class="sl">AI Models</span></div>
+  <div class="sdiv">◈</div>
+  <div class="stat"><span class="sn">100</span><span class="sl">Videos Trained</span></div>
+  <div class="sdiv">◈</div>
+  <div class="stat"><span class="sn">100%</span><span class="sl">Val Accuracy</span></div>
+  <div class="sdiv">◈</div>
+  <div class="stat"><span class="sn">3</span><span class="sl">Verdict Types</span></div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<section class="app-wrap" id="app">
+  <div class="app-card">
+    <div class="card-header">
+      <p class="card-eyebrow">✦ &nbsp; detection engine &nbsp; ✦</p>
+      <h2 class="card-title">Analyze Your Video</h2>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('file',this)">⬡ &nbsp; Upload File</button>
+      <button class="tab" onclick="switchTab('url',this)">⬡ &nbsp; Analyze URL</button>
+    </div>
+
+    <!-- FILE TAB -->
+    <div id="fileTab" class="tab-content active">
+      <div class="drop-zone" id="dropZone">
+        <div class="dz-c tl">◈</div><div class="dz-c tr">◈</div>
+        <div class="dz-c bl">◈</div><div class="dz-c br">◈</div>
+        <svg viewBox="0 0 64 64" width="52" height="52" style="margin-bottom:16px">
+          <rect x="5" y="5" width="54" height="54" rx="14" fill="none" stroke="#e8609a" stroke-width="2"/>
+          <polyline points="17,37 32,20 47,37" fill="none" stroke="#f09cc0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="32" y1="20" x2="32" y2="52" stroke="#f09cc0" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <p class="dz-main">drag & drop your video here</p>
+        <p class="dz-sub">mp4 &nbsp;·&nbsp; avi &nbsp;·&nbsp; mov &nbsp;·&nbsp; mkv &nbsp;·&nbsp; webm</p>
+        <label class="browse-btn" for="videoInput">browse file</label>
+        <input type="file" id="videoInput" accept="video/*" hidden/>
+        <p class="file-name" id="fileInfo">no file selected</p>
+      </div>
+      <div id="videoPreview" style="display:none">
+        <video id="videoPlayer" controls></video>
+      </div>
+      <button class="big-btn" id="analyzeBtn">✦ &nbsp; Analyze Video &nbsp; ✦</button>
+    </div>
+
+    <!-- URL TAB -->
+    <div id="urlTab" class="tab-content">
+      <div class="url-section">
+        <label class="url-lbl">✦ &nbsp; paste youtube or video url</label>
+        <input type="text" id="urlInput" class="url-input" placeholder="https://youtube.com/watch?v=..."/>
+      </div>
+      <button class="big-btn" id="analyzeUrlBtn">✦ &nbsp; Analyze URL &nbsp; ✦</button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" style="display:none">
+      <div class="spin-wrap">
+        <div class="ring ring1"></div>
+        <div class="ring ring2"></div>
+        <div class="ring ring3"></div>
+        <div class="spin-icon">⬡</div>
+      </div>
+      <p class="load-main" id="loadingText">initializing pipeline...</p>
+      <div class="prog-track"><div class="prog-fill" id="progressBar"></div></div>
+      <p class="load-step" id="loadingStep">&nbsp;</p>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results" style="display:none">
+
+      <!-- VERDICT -->
+      <div class="verdict-wrap" id="verdictCard">
+        <div class="vc tl">◈</div><div class="vc tr">◈</div>
+        <div class="vc bl">◈</div><div class="vc br">◈</div>
+        <div class="v-glow"></div>
+        <p class="v-eye">verdict</p>
+        <h2 class="v-text" id="verdictText"></h2>
+        <p class="v-sub" id="verdictSub"></p>
+        <p class="v-stars">✦ &nbsp; ✧ &nbsp; ✦ &nbsp; ✧ &nbsp; ✦</p>
+      </div>
+
+      <!-- GAUGES -->
+      <div class="gauges">
+        <div class="g-card">
+          <p class="g-lbl">Video Score</p>
+          <svg viewBox="0 0 100 60" class="g-svg">
+            <path d="M10,55 A45,45 0 0,1 90,55" fill="none" stroke="rgba(232,96,154,0.12)" stroke-width="10" stroke-linecap="round"/>
+            <path d="M10,55 A45,45 0 0,1 90,55" fill="none" stroke="#e8609a" stroke-width="10" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37" id="vGauge"/>
+          </svg>
+          <p class="g-val" id="vScoreVal">0%</p>
+        </div>
+        <div class="g-card g-center">
+          <p class="g-lbl">Final Score</p>
+          <svg viewBox="0 0 100 60" class="g-svg">
+            <path d="M10,55 A45,45 0 0,1 90,55" fill="none" stroke="rgba(232,96,154,0.12)" stroke-width="12" stroke-linecap="round"/>
+            <path d="M10,55 A45,45 0 0,1 90,55" fill="none" stroke="#f09cc0" stroke-width="12" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37" id="fGauge"/>
+          </svg>
+          <p class="g-val g-val-big" id="fScoreVal">0%</p>
+        </div>
+        <div class="g-card">
+          <p class="g-lbl">Audio Score</p>
+          <svg viewBox="0 0 100 60" class="g-svg">
+            <path d="M10,55 A45,45 0 0,1 90,55" fill="none" stroke="rgba(232,96,154,0.12)" stroke-width="10" stroke-linecap="round"/>
+            <path d="M10,55 A45,45 0 0,1 90,55" fill="none" stroke="#e8609a" stroke-width="10" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37" id="aGauge"/>
+          </svg>
+          <p class="g-val" id="aScoreVal">0%</p>
+        </div>
+      </div>
+
+      <!-- BARS -->
+      <div class="bars-wrap">
+        <p class="bars-title">✦ &nbsp; Score Breakdown &nbsp; ✦</p>
+        <div class="bar-row">
+          <span class="blbl">Video</span>
+          <div class="btrack"><div class="bfill" id="vBar"></div></div>
+          <span class="bpct" id="vBarNum">0%</span>
+        </div>
+        <div class="bar-row">
+          <span class="blbl">Audio</span>
+          <div class="btrack"><div class="bfill" id="aBar"></div></div>
+          <span class="bpct" id="aBarNum">0%</span>
+        </div>
+        <div class="bar-row">
+          <span class="blbl">Fusion</span>
+          <div class="btrack"><div class="bfill bfill-main" id="fBar"></div></div>
+          <span class="bpct" id="fBarNum">0%</span>
+        </div>
+      </div>
+
+      <!-- META -->
+      <div class="meta-wrap">
+        <p class="meta-ttl">✦ &nbsp; File Details &nbsp; ✦</p>
+        <div class="mrow"><span class="mk">Filename</span><span class="mv" id="resFilename">—</span></div>
+        <div class="mrow"><span class="mk">SHA-256</span><span class="mv mono" id="resSha256">—</span></div>
+        <div class="mrow"><span class="mk">Time Taken</span><span class="mv" id="resTime">—</span></div>
+      </div>
+
+      <button class="big-btn" id="pdfBtn">◈ &nbsp; Download PDF Report &nbsp; ◈</button>
+      <button class="ghost-btn" onclick="resetAll()">✦ &nbsp; Analyze Another Video &nbsp; ✦</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="foot-logo">✦ DEEPGUARD ✦</div>
+  <p class="foot-sub">RNS Institute of Technology &nbsp;·&nbsp; B.Tech IDT Project &nbsp;·&nbsp; 2025</p>
+  <p class="foot-tech">EfficientNet-B4 &nbsp;·&nbsp; Gradient Boosting &nbsp;·&nbsp; Fusion MLP &nbsp;·&nbsp; SHA-256</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

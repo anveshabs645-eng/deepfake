@@ -1,0 +1,10 @@
+dataset/
+*.pth
+*.pkl
+*.mp4
+*.avi
+*.mov
+__pycache__/
+venv/
+*.csv
+temp_*

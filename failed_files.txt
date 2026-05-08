@@ -1,0 +1,2 @@
+dataset/real/The moment a jet ski strikes a gray whale off Vancouver’s Stanley Park - Global News (720p, h264).mp4 | Reason: extract_audio returned None
+dataset/fake/rapidsave.com_i_tried_runway_for_the_first_and_the_result_is-58iw1fhmzcze1.mp4 | Reason: extract_audio returned None
