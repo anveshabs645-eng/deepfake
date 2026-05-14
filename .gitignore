@@ -13,3 +13,4 @@ scores.csv
 audio_model.pkl
 fusion_mlp.pth
 video_model.pth
+scores_backup.csv
