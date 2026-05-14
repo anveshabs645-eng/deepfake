@@ -7,4 +7,9 @@ dataset/
 __pycache__/
 venv/
 *.csv
-temp_*
+temp_*.mp4
+*.wav
+scores.csv
+audio_model.pkl
+fusion_mlp.pth
+video_model.pth
