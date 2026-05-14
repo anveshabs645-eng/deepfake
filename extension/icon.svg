@@ -1,0 +1,33 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="24" fill="#0b0b0e"/>
+  <defs>
+    <radialGradient id="eg" cx="50%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#ffcde2"/>
+      <stop offset="45%" stop-color="#e8609a"/>
+      <stop offset="100%" stop-color="#7a1d48"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Hex -->
+  <polygon points="64,10 98,30 98,70 64,90 30,70 30,30"
+           fill="#19080f" stroke="#e8609a" stroke-width="2.5" filter="url(#glow)"/>
+  <!-- Shield -->
+  <path d="M64,30 L80,39 L80,58 Q80,72 64,80 Q48,72 48,58 L48,39 Z"
+        fill="none" stroke="#e8609a" stroke-width="2" filter="url(#glow)"/>
+  <!-- Reticle -->
+  <circle cx="64" cy="52" r="11" fill="none" stroke="#e8609a" stroke-width="1.5"
+          stroke-dasharray="4,2" filter="url(#glow)"/>
+  <!-- Eye -->
+  <circle cx="64" cy="52" r="5" fill="url(#eg)" filter="url(#glow)"/>
+  <circle cx="64" cy="52" r="1.8" fill="#fff" opacity="0.92"/>
+  <!-- Corner dots -->
+  <circle cx="64" cy="10" r="2.5" fill="#f09cc0" filter="url(#glow)"/>
+  <circle cx="98" cy="30" r="2.5" fill="#f09cc0" filter="url(#glow)"/>
+  <circle cx="98" cy="70" r="2.5" fill="#f09cc0" filter="url(#glow)"/>
+  <circle cx="64" cy="90" r="2.5" fill="#f09cc0" filter="url(#glow)"/>
+  <circle cx="30" cy="70" r="2.5" fill="#f09cc0" filter="url(#glow)"/>
+  <circle cx="30" cy="30" r="2.5" fill="#f09cc0" filter="url(#glow)"/>
+</svg>

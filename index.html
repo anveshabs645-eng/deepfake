@@ -204,9 +204,9 @@
 <div class="stats-bar">
   <div class="stat"><span class="sn">3</span><span class="sl">AI Models</span></div>
   <div class="sdiv">◈</div>
-  <div class="stat"><span class="sn">100</span><span class="sl">Videos Trained</span></div>
+  <div class="stat"><span class="sn" id="statVideos">—</span><span class="sl">Videos Trained</span></div>
   <div class="sdiv">◈</div>
-  <div class="stat"><span class="sn">100%</span><span class="sl">Val Accuracy</span></div>
+  <div class="stat"><span class="sn" id="statAccuracy">—</span><span class="sl">Val Accuracy</span></div>
   <div class="sdiv">◈</div>
   <div class="stat"><span class="sn">3</span><span class="sl">Verdict Types</span></div>
 </div>
@@ -280,6 +280,7 @@
         <p class="v-eye">verdict</p>
         <h2 class="v-text" id="verdictText"></h2>
         <p class="v-sub" id="verdictSub"></p>
+        <p class="v-caveat" id="verdictCaveat" style="display:none;font-size:0.78rem;color:#ffaa33;margin-top:6px;letter-spacing:0.05em;"></p>
         <p class="v-stars">✦ &nbsp; ✧ &nbsp; ✦ &nbsp; ✧ &nbsp; ✦</p>
       </div>
 

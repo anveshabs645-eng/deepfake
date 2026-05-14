@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import hashlib
 import os
@@ -8,6 +8,7 @@ import time
 import datetime
 import io
 import torch
+import pandas as pd
 from predict import predict
 from audio_features import load_audio_classifier
 from mlp_model import FusionMLP
@@ -43,9 +44,11 @@ try:
 except FileNotFoundError:
     log.warning("audio_model.pkl not found — audio scores will return 0.5 until trained")
 
-FUSION_THRESHOLD = 0.55
-DEEPFAKE_THRESHOLD = 0.65
-fusion_model = None
+FUSION_THRESHOLD   = 0.21
+DEEPFAKE_THRESHOLD = 0.40
+VAL_ACCURACY       = None
+VIDEOS_TRAINED     = None
+fusion_model       = None
 
 if os.path.exists("fusion_mlp.pth"):
     try:
@@ -53,7 +56,8 @@ if os.path.exists("fusion_mlp.pth"):
         fusion_model = FusionMLP()
         if isinstance(checkpoint, dict) and "model_state" in checkpoint:
             fusion_model.load_state_dict(checkpoint["model_state"])
-            FUSION_THRESHOLD = checkpoint.get("threshold", FUSION_THRESHOLD)
+            #FUSION_THRESHOLD = checkpoint.get("threshold", FUSION_THRESHOLD)
+            VAL_ACCURACY     = checkpoint.get("val_accuracy", None)
         else:
             fusion_model.load_state_dict(checkpoint)
         fusion_model.eval()
@@ -63,6 +67,14 @@ if os.path.exists("fusion_mlp.pth"):
         fusion_model = None
 else:
     log.warning("fusion_mlp.pth not found — falling back to weighted average fusion")
+
+if os.path.exists("scores.csv"):
+    try:
+        _df = pd.read_csv("scores.csv")
+        VIDEOS_TRAINED = len(_df)
+        log.info(f"scores.csv loaded — {VIDEOS_TRAINED} training samples")
+    except Exception as e:
+        log.warning(f"Could not read scores.csv: {e}")
 
 # ─────────────────────────────────────────────
 # REPORT CACHE
@@ -91,27 +103,27 @@ def compute_sha256(path):
 
 def run_predict(temp_path):
     result = predict(temp_path)
+    final_score = result["final_score"]
     v = result.get("V_score", 0.5)
     a = result.get("A_score", 0.5)
-
-    if fusion_model is not None:
-        with torch.no_grad():
-            x = torch.tensor([[v, a]], dtype=torch.float32)
-            logit = fusion_model(x)
-            final_score = torch.sigmoid(logit).item()
-    else:
-        final_score = 0.7 * v + 0.3 * a
 
     if final_score < FUSION_THRESHOLD:
         verdict = "REAL"
     elif final_score < DEEPFAKE_THRESHOLD:
-        verdict = "SUSPICIOUS"
+        if v > 0.35 and a < 0.35:
+            verdict = "SUSPICIOUS — POSSIBLE FACESWAP"
+        else:
+            verdict = "SUSPICIOUS"
     else:
-        verdict = "DEEPFAKE"
+        if v > 0.40 and a < 0.35:
+            verdict = "DEEPFAKE — POSSIBLE FACESWAP"
+        else:
+            verdict = "DEEPFAKE"
 
     result["final_score"] = round(final_score, 4)
     result["verdict"]     = verdict
     result["threshold"]   = round(FUSION_THRESHOLD, 2)
+    cache_result(result)
     return result
 
 # ─────────────────────────────────────────────
@@ -127,6 +139,26 @@ def home():
         },
         "threshold": FUSION_THRESHOLD
     })
+
+@app.route("/health")
+def health():
+    return jsonify({
+        "status":         "running",
+        "videos_trained": VIDEOS_TRAINED,
+        "val_accuracy":   round(VAL_ACCURACY * 100, 1) if VAL_ACCURACY else None
+    })
+
+@app.route('/app')
+def serve_app():
+    return send_from_directory('/Users/omaryabs/Desktop/Anvesha/deepfake', 'index.html')
+
+@app.route('/script.js')
+def serve_script():
+    return send_from_directory('/Users/omaryabs/Desktop/Anvesha/deepfake', 'script.js')
+
+@app.route('/style.css')
+def serve_style():
+    return send_from_directory('/Users/omaryabs/Desktop/Anvesha/deepfake', 'style.css')
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -213,22 +245,13 @@ def analyze_url():
 
     return jsonify(result)
 
-@app.route("/health", methods=["GET"])
-def health():
-    return jsonify({
-        "status":           "ok",
-        "audio_model":      os.path.exists("audio_model.pkl"),
-        "fusion_model":     os.path.exists("fusion_mlp.pth"),
-        "fusion_threshold": FUSION_THRESHOLD
-    })
-
 @app.route("/report", methods=["GET"])
 def generate_report():
     file_hash = request.args.get("hash")
     if not file_hash or file_hash not in _report_cache:
         return jsonify({"error": "No result found for this hash. Analyze a video first."}), 404
 
-    data      = _report_cache[file_hash]
+    data        = _report_cache[file_hash]
     verdict     = data.get("verdict", "UNKNOWN")
     final_score = data.get("final_score", 0)
     v_score     = data.get("V_score", 0)
@@ -236,15 +259,43 @@ def generate_report():
     filename    = data.get("filename") or data.get("url", "Unknown")
     sha256      = data.get("sha256", "N/A")
     elapsed     = data.get("elapsed_sec", "N/A")
-    threshold   = data.get("threshold", 0.55)
+    threshold   = data.get("threshold", 0.21)
     timestamp   = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if verdict == "DEEPFAKE":
-        verdict_color = colors.HexColor("#b90303")
-    elif verdict == "SUSPICIOUS":
-        verdict_color = colors.HexColor("#9B005D")
+    # ── Theme based on verdict ──
+    if "DEEPFAKE" in verdict:
+        verdict_color  = colors.HexColor("#cc0000")
+        theme_header   = colors.HexColor("#4a0000")
+        theme_text     = colors.HexColor("#ffaaaa")
+        theme_row      = colors.HexColor("#fff0f0")
+        theme_grid     = colors.HexColor("#ffcccc")
+        theme_section  = colors.HexColor("#8b0000")
+        theme_subtitle = colors.HexColor("#cc6666")
+        if "FACESWAP" in verdict:
+            sub_msg = "Face-swap likely detected — audio appears genuine"
+        else:
+            sub_msg = "High confidence — manipulated media detected"
+    elif "SUSPICIOUS" in verdict:
+        verdict_color  = colors.HexColor("#c2185b")
+        theme_header   = colors.HexColor("#4a0a2a")
+        theme_text     = colors.HexColor("#ffb3d1")
+        theme_row      = colors.HexColor("#fff0f5")
+        theme_grid     = colors.HexColor("#ffcce0")
+        theme_section  = colors.HexColor("#880044")
+        theme_subtitle = colors.HexColor("#cc5588")
+        if "FACESWAP" in verdict:
+            sub_msg = "Possible face-swap — manual review recommended"
+        else:
+            sub_msg = "Inconclusive — manual review recommended"
     else:
-        verdict_color = colors.HexColor("#017C3F")
+        verdict_color  = colors.HexColor("#006633")
+        theme_header   = colors.HexColor("#002a14")
+        theme_text     = colors.HexColor("#a8e8c8")
+        theme_row      = colors.HexColor("#f0fff5")
+        theme_grid     = colors.HexColor("#a0ddb8")
+        theme_section  = colors.HexColor("#004d22")
+        theme_subtitle = colors.HexColor("#4a9a70")
+        sub_msg = "Low confidence of manipulation — video appears authentic"
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -262,59 +313,54 @@ def generate_report():
     # ── Title ──
     story.append(Paragraph("DEEPGUARD", ParagraphStyle(
         'T', parent=styles['Title'],
-        fontSize=22, textColor=colors.HexColor("#053891"), spaceAfter=4
+        fontSize=35, textColor=colors.HexColor("#0a1f44"), spaceAfter=14
     )))
     story.append(Paragraph("Multimodal Deepfake Detection — Forensic Report", ParagraphStyle(
         'S', parent=styles['Normal'],
-        fontSize=10, textColor=colors.HexColor("#7a9abb"), spaceAfter=16,
+        fontSize=10, textColor=theme_subtitle, spaceAfter=18,
         alignment=1
     )))
     story.append(Spacer(1, 0.1*inch))
 
-    # ── Verdict ──
+    # ── Verdict — use smaller font for long verdicts ──
+    verdict_fontsize = 22 if len(verdict) > 12 else 28
     story.append(Paragraph(verdict, ParagraphStyle(
         'V', parent=styles['Normal'],
-        fontSize=28, textColor=verdict_color,
-        spaceAfter=18, fontName='Helvetica-Bold'
+        fontSize=verdict_fontsize, textColor=verdict_color,
+        spaceAfter=10, fontName='Helvetica-Bold',
+        leading=verdict_fontsize + 6
     )))
-
-    if verdict == "DEEPFAKE":
-        sub_msg = "High confidence — manipulated media detected"
-    elif verdict == "SUSPICIOUS":
-        sub_msg = "Inconclusive — manual review recommended"
-    else:
-        sub_msg = "Low confidence of manipulation — video appears authentic"
-
     story.append(Paragraph(sub_msg, ParagraphStyle(
         'SM', parent=styles['Normal'],
-        fontSize=10, textColor=colors.HexColor("#7a9abb"), spaceAfter=16
+        fontSize=10, textColor=theme_subtitle, spaceAfter=16
     )))
     story.append(Spacer(1, 0.2*inch))
 
     section_style = ParagraphStyle(
         'SEC', parent=styles['Normal'],
-        fontSize=11, textColor=colors.HexColor("#003ea8"),
+        fontSize=11, textColor=theme_section,
         fontName='Helvetica-Bold', spaceAfter=8
     )
 
     # ── Score Table ──
     story.append(Paragraph("DETECTION SCORES", section_style))
     score_table = Table([
-        ["Metric",              "Score",              "Interpretation"],
-        ["Video Score (V)",     f"{v_score:.3f}",     "Spatial artifact analysis via EfficientNet-B4"],
-        ["Audio Score (A)",     f"{a_score:.3f}",     "Spectral analysis via Gradient Boosting"],
-        ["Final Fusion Score",  f"{final_score:.4f}", f"MLP fusion output (threshold: {threshold})"],
+        ["Metric",             "Score",              "Interpretation"],
+        ["Video Score (V)",    f"{v_score:.3f}",     "Spatial artifact analysis via EfficientNet-B4"],
+        ["Audio Score (A)",    f"{a_score:.3f}",     "Spectral analysis via Gradient Boosting"],
+        ["Final Fusion Score", f"{final_score:.4f}", f"MLP fusion output (threshold: {threshold})"],
     ], colWidths=[1.8*inch, 1.0*inch, 3.8*inch])
     score_table.setStyle(TableStyle([
-        ('BACKGROUND',     (0,0), (-1,0),  colors.HexColor("#053891")),
-        ('TEXTCOLOR',      (0,0), (-1,0),  colors.HexColor("#C4C9D1")),
+        ('BACKGROUND',     (0,0), (-1,0),  theme_header),
+        ('TEXTCOLOR',      (0,0), (-1,0),  theme_text),
         ('FONTNAME',       (0,0), (-1,0),  'Helvetica-Bold'),
         ('FONTSIZE',       (0,0), (-1,0),  10),
         ('FONTSIZE',       (0,1), (-1,-1), 9),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor("#f0f4ff"), colors.white]),
-        ('GRID',           (0,0), (-1,-1), 0.5, colors.HexColor("#ccddff")),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [theme_row, colors.white]),
+        ('GRID',           (0,0), (-1,-1), 0.5, theme_grid),
         ('PADDING',        (0,0), (-1,-1), 8),
         ('VALIGN',         (0,0), (-1,-1), 'MIDDLE'),
+        ('WORDWRAP',       (0,0), (-1,-1), True),
     ]))
     story.append(score_table)
     story.append(Spacer(1, 0.2*inch))
@@ -322,20 +368,24 @@ def generate_report():
     # ── Thresholds ──
     story.append(Paragraph("CLASSIFICATION THRESHOLDS", section_style))
     thresh_table = Table([
-        ["Category",    "Score Range",                                      "Status"],
-        ["REAL",        f"< {FUSION_THRESHOLD}",                            "Authentic"],
-        ["SUSPICIOUS",  f"{FUSION_THRESHOLD} - {DEEPFAKE_THRESHOLD}",       "Inconclusive"],
-        ["DEEPFAKE",    f"> {DEEPFAKE_THRESHOLD}",                          "Manipulated"],
-    ], colWidths=[1.8*inch, 1.8*inch, 3.0*inch])
+        ["Category",                    "Score Range",                               "Status"],
+        ["REAL",                        f"< {FUSION_THRESHOLD}",                     "Authentic"],
+        ["SUSPICIOUS",                  f"{FUSION_THRESHOLD} – {DEEPFAKE_THRESHOLD}", "Inconclusive"],
+        ["SUSPICIOUS — POSSIBLE FACESWAP", f"{FUSION_THRESHOLD} – {DEEPFAKE_THRESHOLD}", "Face-swap likely, real audio"],
+        ["DEEPFAKE",                    f"> {DEEPFAKE_THRESHOLD}",                   "Manipulated"],
+        ["DEEPFAKE — POSSIBLE FACESWAP", f"> {DEEPFAKE_THRESHOLD}",                  "Face-swap, real audio"],
+    ], colWidths=[2.4*inch, 1.6*inch, 2.6*inch])
     thresh_table.setStyle(TableStyle([
-        ('BACKGROUND',     (0,0), (-1,0),  colors.HexColor("#053891")),
-        ('TEXTCOLOR',      (0,0), (-1,0),  colors.HexColor("#C4C9D1")),
+        ('BACKGROUND',     (0,0), (-1,0),  theme_header),
+        ('TEXTCOLOR',      (0,0), (-1,0),  theme_text),
         ('FONTNAME',       (0,0), (-1,0),  'Helvetica-Bold'),
-        ('FONTSIZE',       (0,0), (-1,0),  10),
-        ('FONTSIZE',       (0,1), (-1,-1), 9),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor("#f0f4ff"), colors.white]),
-        ('GRID',           (0,0), (-1,-1), 0.5, colors.HexColor("#ccddff")),
-        ('PADDING',        (0,0), (-1,-1), 8),
+        ('FONTSIZE',       (0,0), (-1,0),  9),
+        ('FONTSIZE',       (0,1), (-1,-1), 8),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [theme_row, colors.white]),
+        ('GRID',           (0,0), (-1,-1), 0.5, theme_grid),
+        ('PADDING',        (0,0), (-1,-1), 6),
+        ('VALIGN',         (0,0), (-1,-1), 'MIDDLE'),
+        ('WORDWRAP',       (0,0), (-1,-1), True),
     ]))
     story.append(thresh_table)
     story.append(Spacer(1, 0.2*inch))
@@ -343,22 +393,24 @@ def generate_report():
     # ── File Metadata ──
     story.append(Paragraph("FILE METADATA", section_style))
     meta_table = Table([
-        ["Field",          "Value"],
-        ["Filename",       filename],
-        ["SHA-256 Hash",   sha256],
-        ["Analysis Time",  f"{elapsed} seconds"],
-        ["Timestamp",      timestamp],
-        ["Model",          "EfficientNet-B4 + Gradient Boosting + Fusion MLP"],
+        ["Field",         "Value"],
+        ["Filename",      filename],
+        ["SHA-256 Hash",  sha256],
+        ["Analysis Time", f"{elapsed} seconds"],
+        ["Timestamp",     timestamp],
+        ["Model",         "EfficientNet-B4 + Gradient Boosting + Fusion MLP"],
     ], colWidths=[1.8*inch, 4.8*inch])
     meta_table.setStyle(TableStyle([
-        ('BACKGROUND',     (0,0), (-1,0),  colors.HexColor("#053891")),
-        ('TEXTCOLOR',      (0,0), (-1,0),  colors.HexColor("#C4C9D1")),
+        ('BACKGROUND',     (0,0), (-1,0),  theme_header),
+        ('TEXTCOLOR',      (0,0), (-1,0),  theme_text),
         ('FONTNAME',       (0,0), (-1,0),  'Helvetica-Bold'),
         ('FONTSIZE',       (0,0), (-1,0),  10),
         ('FONTSIZE',       (0,1), (-1,-1), 9),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor("#f0f4ff"), colors.white]),
-        ('GRID',           (0,0), (-1,-1), 0.5, colors.HexColor("#ccddff")),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [theme_row, colors.white]),
+        ('GRID',           (0,0), (-1,-1), 0.5, theme_grid),
         ('PADDING',        (0,0), (-1,-1), 8),
+        ('VALIGN',         (0,0), (-1,-1), 'MIDDLE'),
+        ('WORDWRAP',       (0,0), (-1,-1), True),
     ]))
     story.append(meta_table)
     story.append(Spacer(1, 0.3*inch))
@@ -367,7 +419,7 @@ def generate_report():
     story.append(Paragraph(
         "Generated by DeepGuard — RNSIT B.Tech IDT Project 2026 | For forensic and educational use only.",
         ParagraphStyle('F', parent=styles['Normal'],
-            fontSize=8, textColor=colors.HexColor("#7a9abb"), alignment=1)
+            fontSize=8, textColor=theme_subtitle, alignment=1)
     ))
 
     doc.build(story)

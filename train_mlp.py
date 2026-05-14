@@ -59,7 +59,7 @@ patience_counter = 0
 EARLY_STOP_PATIENCE = 80
 
 print("\nTraining...")
-for epoch in range(10000):
+for epoch in range(1000):
     model.train()
     pred = model(X_train)        # raw logits
     loss = loss_fn(pred, y_train)

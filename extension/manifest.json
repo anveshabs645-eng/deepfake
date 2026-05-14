@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "DeepGuard",
+  "version": "1.0",
+  "description": "Multimodal deepfake detection — analyze any video URL instantly.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1:5000/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
