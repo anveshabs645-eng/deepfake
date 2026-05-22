@@ -147,20 +147,36 @@ function showResults(data) {
 
   vText.textContent = verdict;
 
-  if (verdict === 'DEEPFAKE' || verdict === 'DEEPFAKE — POSSIBLE FACESWAP') {
+  if (verdict.includes('SYNTHETIC')) {
     card.style.borderColor = '#ff3a3a';
     vText.style.color = '#ff3a3a';
     if (vGlow) vGlow.style.background = 'radial-gradient(circle,rgba(255,58,58,0.18),transparent 70%)';
-    vSub.textContent = verdict === 'DEEPFAKE — POSSIBLE FACESWAP'
+    vSub.textContent = 'Entirely AI-generated media detected';
+    if (vCaveat) vCaveat.style.display = 'none';
+  } else if (verdict.includes('DEEPFAKE')) {
+    card.style.borderColor = '#ff3a3a';
+    vText.style.color = '#ff3a3a';
+    if (vGlow) vGlow.style.background = 'radial-gradient(circle,rgba(255,58,58,0.18),transparent 70%)';
+    vSub.textContent = verdict.includes('FACESWAP')
       ? 'Face-swap likely — audio appears genuine'
       : 'High confidence — manipulated media detected';
     if (vCaveat) vCaveat.style.display = 'none';
-  } else if (verdict === 'SUSPICIOUS' || verdict === 'SUSPICIOUS — POSSIBLE FACESWAP') {
-    card.style.borderColor = '#ffaa00';
-    vText.style.color = '#ffaa00';
+  } else if (verdict.includes('MANIPULATED')) {
+    card.style.borderColor = '#4d9fff';
+    vText.style.color = '#4d9fff';
+    if (vGlow) vGlow.style.background = 'radial-gradient(circle,rgba(77,159,255,0.18),transparent 70%)';
+    vSub.textContent = verdict.includes('VOICE CLONE')
+      ? 'Possible voice clone — video appears authentic'
+      : 'Significant manipulation detected — possible AI generation or deepfake';
+    if (vCaveat) vCaveat.style.display = 'none';
+  } else if (verdict.includes('SUSPICIOUS')) {
+    card.style.borderColor = '#ff1493';
+    vText.style.color = '#ff1493';
     if (vGlow) vGlow.style.background = 'radial-gradient(circle,rgba(255,170,0,0.18),transparent 70%)';
-    vSub.textContent = verdict === 'SUSPICIOUS — POSSIBLE FACESWAP'
+    vSub.textContent = verdict.includes('FACESWAP')
       ? 'Possible face-swap — manual review recommended'
+      : verdict.includes('VOICE CLONE')
+      ? 'Possible voice clone — manual review recommended'
       : 'Inconclusive — manual review recommended';
     if (vCaveat) { vCaveat.style.display = 'block'; vCaveat.textContent = 'Score falls between thresholds. Consider additional verification.'; }
   } else {

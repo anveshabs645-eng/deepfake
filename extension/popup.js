@@ -104,25 +104,34 @@ function showResult(data) {
   vText.textContent = verdict;
   vCaveat.style.display = 'none';
 
-  if (verdict.includes('DEEPFAKE')) {
+  if (verdict.includes('SYNTHETIC')) {
+    card.style.borderColor = '#ff3a7a';
+    vText.style.color      = '#ff3a7a';
+    vText.style.textShadow = '0 0 24px rgba(255,58,122,0.8)';
+    vSub.textContent       = '⚠ entirely AI-generated media';
+  } else if (verdict.includes('DEEPFAKE')) {
     card.style.borderColor = '#ff3a7a';
     vText.style.color      = '#ff3a7a';
     vText.style.textShadow = '0 0 24px rgba(255,58,122,0.8)';
     vSub.textContent       = verdict.includes('FACESWAP')
-      ? '⚠ face-swap likely — audio appears genuine'
+      ? '⚠ face-swap likely — audio genuine'
       : '⚠ manipulated media detected';
+  } else if (verdict.includes('MANIPULATED')) {
+    card.style.borderColor = '#4d9fff';
+    vText.style.color      = '#4d9fff';
+    vText.style.textShadow = '0 0 24px rgba(77,159,255,0.8)';
+    vSub.textContent       = verdict.includes('VOICE CLONE')
+      ? '◈ possible voice clone detected'
+      : '◈ significant manipulation detected';
   } else if (verdict.includes('SUSPICIOUS')) {
-    card.style.borderColor = '#ffaa44';
-    vText.style.color      = '#ffaa44';
-    vText.style.textShadow = '0 0 24px rgba(255,170,68,0.8)';
+    card.style.borderColor = '#ff1493';
+    vText.style.color      = '#ff1493';
+    vText.style.textShadow = '0 0 24px rgba(255,20,147,0.8)';
     vSub.textContent       = verdict.includes('FACESWAP')
-      ? '◈ possible face-swap — review recommended'
+      ? '◈ possible face-swap detected'
+      : verdict.includes('VOICE CLONE')
+      ? '◈ possible voice clone detected'
       : '◈ manual review recommended';
-    const avg = (vScore + aScore + fScore) / 3;
-    if (avg >= 0.35 && avg <= 0.65) {
-      vCaveat.textContent   = '⚠ low confidence — scores inconclusive';
-      vCaveat.style.display = 'block';
-    }
   } else {
     card.style.borderColor = '#44ffb0';
     vText.style.color      = '#44ffb0';

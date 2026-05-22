@@ -56,7 +56,7 @@ if os.path.exists("fusion_mlp.pth"):
         fusion_model = FusionMLP()
         if isinstance(checkpoint, dict) and "model_state" in checkpoint:
             fusion_model.load_state_dict(checkpoint["model_state"])
-            #FUSION_THRESHOLD = checkpoint.get("threshold", FUSION_THRESHOLD)
+            # FUSION_THRESHOLD = checkpoint.get("threshold", FUSION_THRESHOLD)
             VAL_ACCURACY     = checkpoint.get("val_accuracy", None)
         else:
             fusion_model.load_state_dict(checkpoint)
@@ -108,17 +108,28 @@ def run_predict(temp_path):
     a = result.get("A_score", 0.5)
 
     if final_score < FUSION_THRESHOLD:
-        verdict = "REAL"
+        if v > 0.45 and a < 0.35:
+            verdict = "SUSPICIOUS — POSSIBLE FACESWAP"
+        else:
+            verdict = "REAL"
+
     elif final_score < DEEPFAKE_THRESHOLD:
         if v > 0.35 and a < 0.35:
             verdict = "SUSPICIOUS — POSSIBLE FACESWAP"
+        elif v < 0.30 and a > 0.55:
+            verdict = "SUSPICIOUS — POSSIBLE VOICE CLONE"
         else:
             verdict = "SUSPICIOUS"
+
     else:
-        if v > 0.40 and a < 0.35:
+        if v > 0.60 and a > 0.60:
+            verdict = "SYNTHETIC — AI GENERATED"
+        elif v > 0.40 and a < 0.35:
             verdict = "DEEPFAKE — POSSIBLE FACESWAP"
+        elif v < 0.30 and a > 0.65:
+            verdict = "MANIPULATED — POSSIBLE VOICE CLONE"
         else:
-            verdict = "DEEPFAKE"
+            verdict = "MANIPULATED"
 
     result["final_score"] = round(final_score, 4)
     result["verdict"]     = verdict
@@ -263,7 +274,7 @@ def generate_report():
     timestamp   = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # ── Theme based on verdict ──
-    if "DEEPFAKE" in verdict:
+    if "SYNTHETIC" in verdict:
         verdict_color  = colors.HexColor("#cc0000")
         theme_header   = colors.HexColor("#4a0000")
         theme_text     = colors.HexColor("#ffaaaa")
@@ -271,10 +282,31 @@ def generate_report():
         theme_grid     = colors.HexColor("#ffcccc")
         theme_section  = colors.HexColor("#8b0000")
         theme_subtitle = colors.HexColor("#cc6666")
-        if "FACESWAP" in verdict:
-            sub_msg = "Face-swap likely detected — audio appears genuine"
+        sub_msg        = "Entirely AI-generated media detected — no authentic source"
+
+    elif "DEEPFAKE" in verdict:
+        verdict_color  = colors.HexColor("#cc0000")
+        theme_header   = colors.HexColor("#4a0000")
+        theme_text     = colors.HexColor("#ffaaaa")
+        theme_row      = colors.HexColor("#fff0f0")
+        theme_grid     = colors.HexColor("#ffcccc")
+        theme_section  = colors.HexColor("#8b0000")
+        theme_subtitle = colors.HexColor("#cc6666")
+        sub_msg        = "Face-swap likely detected — audio appears genuine" if "FACESWAP" in verdict else "High confidence — manipulated media detected"
+
+    elif "MANIPULATED" in verdict:
+        verdict_color  = colors.HexColor("#1565c0")
+        theme_header   = colors.HexColor("#0d3b6e")
+        theme_text     = colors.HexColor("#b3d1ff")
+        theme_row      = colors.HexColor("#f0f5ff")
+        theme_grid     = colors.HexColor("#99bbff")
+        theme_section  = colors.HexColor("#1a4a8a")
+        theme_subtitle = colors.HexColor("#4d88cc")
+        if "VOICE CLONE" in verdict:
+            sub_msg = "Possible voice clone — video appears authentic"
         else:
-            sub_msg = "High confidence — manipulated media detected"
+            sub_msg = "Significant manipulation detected — possible AI generation or deepfake"
+
     elif "SUSPICIOUS" in verdict:
         verdict_color  = colors.HexColor("#c2185b")
         theme_header   = colors.HexColor("#4a0a2a")
@@ -285,9 +317,12 @@ def generate_report():
         theme_subtitle = colors.HexColor("#cc5588")
         if "FACESWAP" in verdict:
             sub_msg = "Possible face-swap — manual review recommended"
+        elif "VOICE CLONE" in verdict:
+            sub_msg = "Possible voice clone — manual review recommended"
         else:
             sub_msg = "Inconclusive — manual review recommended"
-    else:
+
+    else:  # REAL
         verdict_color  = colors.HexColor("#006633")
         theme_header   = colors.HexColor("#002a14")
         theme_text     = colors.HexColor("#a8e8c8")
@@ -295,7 +330,7 @@ def generate_report():
         theme_grid     = colors.HexColor("#a0ddb8")
         theme_section  = colors.HexColor("#004d22")
         theme_subtitle = colors.HexColor("#4a9a70")
-        sub_msg = "Low confidence of manipulation — video appears authentic"
+        sub_msg        = "Low confidence of manipulation — video appears authentic"
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -322,8 +357,8 @@ def generate_report():
     )))
     story.append(Spacer(1, 0.1*inch))
 
-    # ── Verdict — use smaller font for long verdicts ──
-    verdict_fontsize = 22 if len(verdict) > 12 else 28
+    # ── Verdict ──
+    verdict_fontsize = 18 if len(verdict) > 20 else 22 if len(verdict) > 12 else 28
     story.append(Paragraph(verdict, ParagraphStyle(
         'V', parent=styles['Normal'],
         fontSize=verdict_fontsize, textColor=verdict_color,
@@ -367,23 +402,28 @@ def generate_report():
 
     # ── Thresholds ──
     story.append(Paragraph("CLASSIFICATION THRESHOLDS", section_style))
+    f_thresh = round(FUSION_THRESHOLD, 2)
+    d_thresh = round(DEEPFAKE_THRESHOLD, 2)
     thresh_table = Table([
-        ["Category",                    "Score Range",                               "Status"],
-        ["REAL",                        f"< {FUSION_THRESHOLD}",                     "Authentic"],
-        ["SUSPICIOUS",                  f"{FUSION_THRESHOLD} – {DEEPFAKE_THRESHOLD}", "Inconclusive"],
-        ["SUSPICIOUS — POSSIBLE FACESWAP", f"{FUSION_THRESHOLD} – {DEEPFAKE_THRESHOLD}", "Face-swap likely, real audio"],
-        ["DEEPFAKE",                    f"> {DEEPFAKE_THRESHOLD}",                   "Manipulated"],
-        ["DEEPFAKE — POSSIBLE FACESWAP", f"> {DEEPFAKE_THRESHOLD}",                  "Face-swap, real audio"],
-    ], colWidths=[2.4*inch, 1.6*inch, 2.6*inch])
+        ["Verdict",                          "Condition",                          "Meaning"],
+        ["REAL",                             f"Score < {f_thresh}",                "Authentic"],
+        ["SUSPICIOUS",                       f"{f_thresh} to {d_thresh}",          "Inconclusive"],
+        ["SUSPICIOUS — POSSIBLE FACESWAP",   f"Score < {d_thresh}, V>0.35, A<0.35","Visual anomaly, clean audio"],
+        ["SUSPICIOUS — POSSIBLE VOICE CLONE",f"Score < {d_thresh}, V<0.30, A>0.55","Clean video, synthetic audio"],
+        ["MANIPULATED",                      f"Score > {d_thresh}",                "AI/deepfake likely"],
+        ["MANIPULATED — POSSIBLE VOICE CLONE",f"Score > {d_thresh}, V<0.30, A>0.65","Voice clone detected"],
+        ["DEEPFAKE — POSSIBLE FACESWAP",     f"Score > {d_thresh}, V>0.40, A<0.35","Face-swap, real audio"],
+        ["SYNTHETIC — AI GENERATED",         f"Score > {d_thresh}, V>0.60, A>0.60","Fully AI generated"],
+    ], colWidths=[2.6*inch, 2.0*inch, 2.0*inch])
     thresh_table.setStyle(TableStyle([
         ('BACKGROUND',     (0,0), (-1,0),  theme_header),
         ('TEXTCOLOR',      (0,0), (-1,0),  theme_text),
         ('FONTNAME',       (0,0), (-1,0),  'Helvetica-Bold'),
-        ('FONTSIZE',       (0,0), (-1,0),  9),
-        ('FONTSIZE',       (0,1), (-1,-1), 8),
+        ('FONTSIZE',       (0,0), (-1,0),  8),
+        ('FONTSIZE',       (0,1), (-1,-1), 7),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [theme_row, colors.white]),
         ('GRID',           (0,0), (-1,-1), 0.5, theme_grid),
-        ('PADDING',        (0,0), (-1,-1), 6),
+        ('PADDING',        (0,0), (-1,-1), 5),
         ('VALIGN',         (0,0), (-1,-1), 'MIDDLE'),
         ('WORDWRAP',       (0,0), (-1,-1), True),
     ]))
@@ -431,6 +471,15 @@ def generate_report():
         as_attachment=True,
         download_name=f"deepguard_report_{file_hash[:8]}.pdf"
     )
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status":           "ok",
+        "audio_model":      os.path.exists("audio_model.pkl"),
+        "fusion_model":     os.path.exists("fusion_mlp.pth"),
+        "fusion_threshold": FUSION_THRESHOLD
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

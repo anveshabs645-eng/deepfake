@@ -457,7 +457,7 @@ body{
 }
 
 /* RESULTS */
-#results{animation:fadeIn 0.6s ease;}
+#results{animation:fadeIn 0.6s ease; margin-top:32px;}
 
 .verdict-wrap{
   position:relative;text-align:center;
